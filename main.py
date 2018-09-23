@@ -16,9 +16,19 @@ orders = []
 while True:
 	for pair in pairs:
 
-		balance = ex.getBalance(pair['quoteAsset'])
 		orderCount = ex.openOrderCount()
 		localTime = time.time()
+
+		# SET BALANCE ACCORDING TO MAX ALLOWED ORDERS	
+		balance = ex.getBalance(pair['quoteAsset'])
+		if((int(cfg['maxOrders']) - orderCount) > 0):
+			balance = balance / (int(cfg['maxOrders']) - orderCount)
+
+		# MINIMUM BALANCE REQUIRED TO MAKE AN ORDER
+		if(pair['quoteAsset'] == 'USDT'):
+			minOrderValue = float(cfg['minOrderValueUSDT'])
+		if(pair['quoteAsset'] == 'BTC'):
+			minOrderValue = float(cfg['minOrderValueBTC'])
 
 		print('Checking:', pair['symbol'])
 
@@ -30,10 +40,8 @@ while True:
 		dfopenprev = float(df['HA_OpenEMA'].iloc[-2])
 		dfcloseprev = float(df['HA_CloseEMA'].iloc[-2])
 
-		if(orderCount < int(cfg['maxOrders']) and ex.getVolume(pair['symbol']) > int(cfg['minVolume'])):
-			# SET BALANCE ACCORDING TO MAX ALLOWED ORDERS
-			balance = balance / (int(cfg['maxOrders']) - orderCount)
 
+		if(orderCount < int(cfg['maxOrders']) and ex.getVolume(pair['symbol']) > int(cfg['minVolume']) and balance > minOrderValue):
 			# SET BUYPRICE, SELLPRICE AND AMOUNT TO BUY
 			buyPrice = hlp.roundPrice(ex.getBidPrice(pair['symbol'])*0.999, pair['tickSize'])
 			amount = hlp.roundAmount(buyPrice, balance, pair['stepSize'])

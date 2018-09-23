@@ -7,5 +7,7 @@
 	"trailDeviation": "0.2",
 	"minProfitPercentage": "0.5",
 	"maxProfitPercentage": "2",
-	"stopLossPercentage": "2"
+	"stopLossPercentage": "2",
+	"minOrderValueUSDT": "10",
+	"minOrderValueBTC": "0.001"
 }

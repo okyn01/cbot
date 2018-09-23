@@ -31,7 +31,11 @@ class Trailingstop(Thread, Exchange):
 
 			priceDifference = hlp.diff(self.order['buyPrice'], currentPrice)
 
-			print(self.order['symbol'], self.order['buyPrice'], currentPrice, priceDifference)
+			print(self.order['symbol'], 
+					'- Buy price:', self.order['buyPrice'], 
+					'- Current price:', currentPrice, 
+					'- Min sell price:', minProfitPrice,
+					'- Difference:', priceDifference)
 
 			if(currentPrice > float(highestPrice)):
 				highestPrice = currentPrice
@@ -42,6 +46,7 @@ class Trailingstop(Thread, Exchange):
 				self.cancelOrder(self.order['symbol'], self.order['sellID'])
 				self.sellLimit(self.order['symbol'], self.order['amount'], self.minProfitPrice)
 				print('[SOLD] Order ID:', self.order['orderID'], '- Ticker:', self.order['symbol'], '- Difference:', priceDifference)
+				self.selling = False
 
 			if(currentPrice <= float(self.stopLossPrice)):
 				# CANCEL MAX PROFIT ORDER AND THEN SELL FOR STOP LOSS
