@@ -1,0 +1,11 @@
+{
+	"maxOrders": "4",
+  "interval": "5m",
+  "limit": "100",
+  "minVolume": "4000",
+  "orderTimeout": "900",
+	"trailDeviation": "0.2",
+	"minProfitPercentage": "0.5",
+	"maxProfitPercentage": "2",
+	"stopLossPercentage": "2"
+}
