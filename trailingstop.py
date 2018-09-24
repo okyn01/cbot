@@ -10,12 +10,10 @@ class Trailingstop(Thread, Exchange):
 		self.cfg = json.load(open('config.json'))
 		self.order = order
 
-		# Set statement for while loop till it's sold
-		self.selling = True
-
 		self.stopLossPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 - (float(self.cfg['stopLossPercentage']) / 100)), self.order['tickSize'])
-		self.minProfitPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 + (float(self.cfg['minProfitPercentage']) / 100)), self.order['tickSize'])
-		self.maxProfitPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 + (float(self.cfg['maxProfitPercentage']) / 100)), self.order['tickSize'])
+		self.minSellPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 + (float(self.cfg['trailThreshold']) / 100)), self.order['tickSize'])
+		self.maxSellPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 + (float(self.cfg['maxProfitPercentage']) / 100)), self.order['tickSize'])
+		self.trailDeviation = 1 - (float(self.cfg['trailDeviation']) / 100)
 
 		Exchange.__init__(self)
 		Thread.__init__(self)
@@ -23,10 +21,11 @@ class Trailingstop(Thread, Exchange):
 		self.start()
 
 	def run(self):
-		highestPrice = self.order['buyPrice']
+		sellingState = True
+		highestPrice = float(self.order['buyPrice'])
 
-		self.order['sellID'] = self.sellLimit(self.order['symbol'], self.order['amount'], self.maxProfitPrice)
-		while self.selling:
+		self.order['sellID'] = self.sellLimit(self.order['symbol'], self.order['amount'], self.maxSellPrice)
+		while sellingState:
 			currentPrice = float(self.getBidPrice(self.order['symbol']))
 
 			priceDifference = hlp.diff(self.order['buyPrice'], currentPrice)
@@ -34,27 +33,38 @@ class Trailingstop(Thread, Exchange):
 			print(self.order['symbol'], 
 					'- Buy price:', self.order['buyPrice'], 
 					'- Current price:', currentPrice, 
-					'- Min sell price:', minProfitPrice,
+					'- Min profit price:', self.minSellPrice,
 					'- Difference:', priceDifference)
 
 			if(currentPrice > float(highestPrice)):
 				highestPrice = currentPrice
-				print('Order ID:', self.order['orderID'], '- Ticker:', self.order['symbol'], '- Difference:', priceDifference)
 
-			if(currentPrice >= float(self.minProfitPrice)):
-				# currentprice is higher than min profit price 
+			if((highestPrice * self.trailDeviation) <= currentPrice and float(self.minSellPrice) <= currentPrice):
+				# SELL WITH PROFIT YAY :) 
 				self.cancelOrder(self.order['symbol'], self.order['sellID'])
-				self.sellLimit(self.order['symbol'], self.order['amount'], self.minProfitPrice)
-				print('[SOLD] Order ID:', self.order['orderID'], '- Ticker:', self.order['symbol'], '- Difference:', priceDifference)
-				self.selling = False
+				#self.order['sellPrice'] = hlp.formatFloat(currentPrice)
+				#self.order['sellID'] = self.sellLimit(self.order['symbol'], self.order['amount'], self.order['sellPrice'])
+				self.order['sellID'] = self.sellMarket(self.order['symbol'], self.order['amount'])
+				sellingState = False
+				self.checkSellOrder(self.order['sellID'])
 
 			if(currentPrice <= float(self.stopLossPrice)):
-				# CANCEL MAX PROFIT ORDER AND THEN SELL FOR STOP LOSS
+				# CANCEL MAX PROFIT ORDER AND THEN SELL FOR STOP LOSS [RIP MONEY] :(
 				self.cancelOrder(self.order['symbol'], self.order['sellID'])
-				self.sellMarket(self.order['symbol'], self.order['amount'])
-				print('[SOLD] Order ID:', self.order['orderID'], '- Ticker:', self.order['symbol'], '- Difference:', priceDifference)
-				self.selling = False
+				self.order['sellID'] = self.sellMarket(self.order['symbol'], self.order['amount'])
+				sellingState = False
+				self.checkSellOrder(self.order['sellID'])
 
 			time.sleep(2)
 
+
+	def checkSellOrder(self, order):
+		sellOrderState = True
+		while sellOrderState:
+			order = self.checkOrder(self.order['symbol'], self.order['sellID'])
+			if(order['status'] == "FILLED"):
+				sellOrderState = False
+				priceDifference = hlp.diff(self.order['buyPrice'], order['price'])
+				print('[SOLD] Order ID:', self.order['orderID'], '- Ticker:', self.order['symbol'], '- Difference:', priceDifference)
+			time.sleep(10)
 		return

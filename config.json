@@ -1,13 +1,15 @@
 {
 	"maxOrders": "4",
 	"interval": "5m",
-	"limit": "100",
+	"limit": "75",
 	"minVolume": "4000",
 	"orderTimeout": "900",
+	"buyPriceDeviation": "0.999",
 	"trailDeviation": "0.2",
-	"minProfitPercentage": "0.5",
+	"trailThreshold": "0.3",
 	"maxProfitPercentage": "2",
 	"stopLossPercentage": "2",
 	"minOrderValueUSDT": "10",
-	"minOrderValueBTC": "0.001"
+	"minOrderValueBTC": "0.001",
+	"fees": "0.075"
 }

@@ -40,14 +40,19 @@ while True:
 		dfopenprev = float(df['HA_OpenEMA'].iloc[-2])
 		dfcloseprev = float(df['HA_CloseEMA'].iloc[-2])
 
+		dfhigh = float(df['High'].iloc[-1])
+		dfhighprev = float(df['High'].iloc[-2])
+		dfhighEMA = float(df['HA_HighEMA'].iloc[-1])
+		dfhighprevEMA = float(df['HA_HighEMA'].iloc[-2])
 
 		if(orderCount < int(cfg['maxOrders']) and ex.getVolume(pair['symbol']) > int(cfg['minVolume']) and balance > minOrderValue):
 			# SET BUYPRICE, SELLPRICE AND AMOUNT TO BUY
-			buyPrice = hlp.roundPrice(ex.getBidPrice(pair['symbol'])*0.999, pair['tickSize'])
+			buyPrice = hlp.roundPrice(ex.getBidPrice(pair['symbol'])*0.99825, pair['tickSize'])
 			amount = hlp.roundAmount(buyPrice, balance, pair['stepSize'])
 
 			# EXECUTE STRAT
-			if(dfopen <= dfclose and dfopenprev >= dfcloseprev):
+			#if(dfopen <= dfclose and dfopenprev >= dfcloseprev):
+			if(dfhigh >= dfhighEMA and dfhighprev <= dfhighprevEMA):
 				# CHECK IF SYMBOL IS NOT IN ORDERS THEN MAKE A BUY ORDER
 				if(ex.symbolExistsOrders(orders, pair['symbol']) == False):
 
