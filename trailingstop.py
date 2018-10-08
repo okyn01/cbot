@@ -11,7 +11,7 @@ class Trailingstop(Thread, Exchange):
 		self.order = order
 
 		self.stopLossPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 - (float(self.cfg['stopLossPercentage']) / 100)), self.order['tickSize'])
-		self.minSellPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 + (float(self.cfg['trailThreshold']) / 100)), self.order['tickSize'])
+		self.minSellPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 + (float(self.cfg['minProfitPercentage']) / 100)), self.order['tickSize'])
 		self.maxSellPrice = hlp.roundPrice(float(self.order['buyPrice']) * (1 + (float(self.cfg['maxProfitPercentage']) / 100)), self.order['tickSize'])
 		self.trailDeviation = 1 - (float(self.cfg['trailDeviation']) / 100)
 
@@ -45,20 +45,21 @@ class Trailingstop(Thread, Exchange):
 				#self.order['sellPrice'] = hlp.formatFloat(currentPrice)
 				#self.order['sellID'] = self.sellLimit(self.order['symbol'], self.order['amount'], self.order['sellPrice'])
 				self.order['sellID'] = self.sellMarket(self.order['symbol'], self.order['amount'])
-				sellingState = False
 				self.checkSellOrder(self.order['sellID'])
-
+				sellingState = False
+				
 			if(currentPrice <= float(self.stopLossPrice)):
 				# CANCEL MAX PROFIT ORDER AND THEN SELL FOR STOP LOSS [RIP MONEY] :(
 				self.cancelOrder(self.order['symbol'], self.order['sellID'])
 				self.order['sellID'] = self.sellMarket(self.order['symbol'], self.order['amount'])
-				sellingState = False
 				self.checkSellOrder(self.order['sellID'])
+				sellingState = False
+				
 
 			time.sleep(2)
 
 
-	def checkSellOrder(self, order):
+	def checkSellOrder(self):
 		sellOrderState = True
 		while sellOrderState:
 			order = self.checkOrder(self.order['symbol'], self.order['sellID'])
@@ -66,5 +67,10 @@ class Trailingstop(Thread, Exchange):
 				sellOrderState = False
 				priceDifference = hlp.diff(self.order['buyPrice'], order['price'])
 				print('[SOLD] Order ID:', self.order['orderID'], '- Ticker:', self.order['symbol'], '- Difference:', priceDifference)
+				hlp.addLog('[SOLD] Order ID:' + self.order['orderID'] +
+									 '- Ticker:' + self.order['symbol'] +
+									 '- Buy price:' + self.order['buyPrice'] +
+									 '- Sell Price:' + order['price'] +
+									 '- Difference:' + priceDifference)
 			time.sleep(10)
 		return

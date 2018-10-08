@@ -56,15 +56,17 @@ while True:
 				# CHECK IF SYMBOL IS NOT IN ORDERS THEN MAKE A BUY ORDER
 				if(ex.symbolExistsOrders(orders, pair['symbol']) == False):
 
+					buyOrder = ex.buyMarket(pair['symbol'], amount)
+
 					orders.append({
-						'orderID': ex.buyLimit(pair['symbol'], amount, buyPrice),
-						'symbol': pair['symbol'],
-						'buyPrice': buyPrice,
+						'orderID': buyOrder['orderId'],
+						'symbol': buyOrder['symbol'],
+						'buyPrice': buyOrder['price'],
 						'sellID': 0,
 						'sellPrice': 0,
-						'amount': amount,
-						'side': 'BUY',
-						'status': 'NEW',
+						'amount': buyOrder['executedQty'],
+						'side': buyOrder['side'],
+						'status': buyOrder['status'],
 						'tickSize': pair['tickSize'],
 						'time': int(time.time())
 						})
