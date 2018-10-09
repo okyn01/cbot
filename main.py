@@ -16,6 +16,8 @@ orders = []
 while True:
 	for pair in pairs:
 
+		print('Checking:', pair['symbol'])
+
 		orderCount = ex.openOrderCount()
 		localTime = time.time()
 
@@ -30,7 +32,8 @@ while True:
 		if(pair['quoteAsset'] == 'BTC'):
 			minOrderValue = float(cfg['minOrderValueBTC'])
 
-		print('Checking:', pair['symbol'])
+		# GET SPREAD
+		spread = ex.getSpread(pair['symbol'])
 
 		# STRATEGY
 		df = strat.smoothHA(pair['symbol'], cfg['interval'], cfg['limit'], 10, 10)
@@ -45,7 +48,11 @@ while True:
 		dfhighEMA = float(df['HA_HighEMA'].iloc[-1])
 		dfhighprevEMA = float(df['HA_HighEMA'].iloc[-2])
 
-		if(orderCount < int(cfg['maxOrders']) and ex.getVolume(pair['symbol']) > int(cfg['minVolume']) and balance > minOrderValue):
+		if(	orderCount < int(cfg['maxOrders']) and 
+				ex.getVolume(pair['symbol']) > int(cfg['minVolume']) and 
+				balance > minOrderValue and
+				spread < 0.15
+			):
 			# SET BUYPRICE, SELLPRICE AND AMOUNT TO BUY
 			buyPrice = hlp.roundPrice(ex.getBidPrice(pair['symbol'])*0.99825, pair['tickSize'])
 			amount = hlp.roundAmount(buyPrice, balance, pair['stepSize'])

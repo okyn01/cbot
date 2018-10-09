@@ -1,5 +1,6 @@
 from binance.client import Client
 import json
+import helper as hlp
 
 class Exchange:
 	"""Handles all exchange functions for binance"""
@@ -72,22 +73,22 @@ class Exchange:
 		"""Create a limit buy order and return order ID"""
 		print(symbol, amount, price)
 		order = self.client.order_limit_buy(symbol=symbol, quantity=amount,	price=price, recvWindow=10000)
-		return order['orderId']
+		return order
 
 	def sellLimit(self, symbol, amount, price):
 		"""Create a limit sell order and return order ID"""
 		order = self.client.order_limit_sell(symbol=symbol, quantity=amount, price=price, recvWindow=10000)
-		return order['orderId']
+		return order
 
 	def buyMarket(self, symbol, amount):
 		"""Buy asset for current market price and return order ID"""
 		order = self.client.order_market_buy(symbol=symbol,	quantity=amount, recvWindow=10000)
-		return order['orderId']
+		return order
 
 	def sellMarket(self, symbol, amount):
 		"""Sell asset for current market price and return order ID"""
 		order = self.client.order_market_sell(symbol=symbol, quantity=amount, recvWindow=10000)
-		return order['orderId']
+		return order
 
 	def checkOrder(self, symbol, orderId):
 		"""Get an order status"""
@@ -105,9 +106,13 @@ class Exchange:
 		return len(orderCount)
 
 	def symbolExistsOrders(self, orders, symbol):
-		"""Returns true if an order with a symbol already exists"""
+		"""Returns true if an order with given symbol already exists"""
 		orders = self.client.get_open_orders(recvWindow=10000)
 		for order in orders:
 			if symbol == order['symbol']:
 				return True
 		return False
+
+	def getSpread(self, symbol):
+		spread = hlp.diff(self.getBidPrice(symbol), self.getAskPrice(symbol))
+		return float(spread)
